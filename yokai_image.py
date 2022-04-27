@@ -79,7 +79,7 @@ def decode_lut(file, metadata):
     return block_length, lut
 
 
-def read_img_size(file, offset, pointer):
+def read_image_size(file, offset, pointer):
     file.seek(offset + pointer + 4)
     w, h = struct.unpack("ii", file.read(8))
     
