@@ -1,6 +1,9 @@
+from os import major
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import struct
+
+__version__ = (0, 1)
 
 encodings = {
     "HLSB": (1, "big"),
@@ -39,7 +42,7 @@ def bytes2img(im, size, encoding="HLSB"):
     return im
 
 
-def encode_images(images: dict):
+def encode_images(images: dict, encoding="HLSB"):
     img_block = b"\x02"
 
     offset = 1
@@ -48,7 +51,7 @@ def encode_images(images: dict):
 
     for key, img in images.items():
         wh = struct.pack("ii", *img.size)
-        img_bytes = img2bytes(img)
+        img_bytes = img2bytes(img, encoding=encoding)
         length = 4 + len(wh) + len(img_bytes)
         length_bytes = struct.pack("i", length)
         section = length_bytes + wh + img_bytes
@@ -112,3 +115,85 @@ def encode_metadata(metadata: dict):
     metadata_block = b"\x00" + version_section + metadata_length + metadata_block
 
     return metadata_block
+
+
+def encode_imageset(
+    images: dict, 
+    yi_type: str, 
+    img_encoding: str = "HLSB",
+    font_encoding: str = "ascii",
+    pointer_length: int = 1
+) -> bytes:
+    metadata = {
+        "version": __version__,
+        "yi_type": yi_type,
+        "img_encoding": img_encoding,
+        "pointer_length": pointer_length,
+        "image_count": len(images),
+        "max_size": tuple(np.max([i.size for i in images.items], 0))
+    }
+
+    if "yi_type" == "font":
+        metadata["font_encoding"] = font_encoding
+
+    lut, image_block = encode_images(images)
+    lut_block = encode_lut(lut, pointer_length)
+    metadata_block = encode_metadata(metadata)
+
+    combined_blocks = metadata_block + lut_block + image_block
+
+    return combined_blocks
+
+
+def create_typeset(
+    font: ImageFont, 
+    glyphs: str, 
+    font_encoding: str = "ascii", 
+    invert: bool = False,
+    fixed_size: bool = True
+):
+    images = {}
+
+    max_size = np.max([font.getsize(g) for g in glyphs], 0)
+    bg_color = invert
+    fg_color = not invert
+
+    for glyph in glyphs:
+        size = size if fixed_size else font.getsize(g)
+        i = Image.new(size=size, mode='1', color=bg_color)
+        d = ImageDraw.Draw(i)
+    
+        d.text((0, 0), glyph, font=font, fill=fg_color)
+
+        key = ord(glyph.encode(font_encoding))
+        images[key] = i
+
+    return images, max_size
+
+
+def create_imageset(
+    images
+):
+    image_dict = {}
+    for idx, image in enumerate(images):
+        image = image.covert("1")
+        image[idx] = image
+
+    return image_dict
+
+
+def decode_yi_file(file):
+    from yokai_image import decode_metadata, decode_lut, read_image
+    images = {}
+
+    metadata = decode_metadata(file)
+    lut_len, lut = decode_lut(file, metadata)
+    img_offset = metadata["metadata_length"] + lut_len
+
+    for key, pointer in lut.items():
+        size, image_bytes = read_image(file, offset=img_offset, pointer=lut[pointer])
+        image = bytes2img(image_bytes, size, encoding=metadata["encoding"])
+
+        images[key] = image
+
+    return metadata, images

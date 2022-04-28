@@ -1,10 +1,10 @@
 # Yokai Image File Specification
-The Yokai Image (**.yi**) format is what I use to store images and font glyphs (of fixed size) for use with YOKAI (enter link here) and other micropython-based stuff that runs an e-paper display.****
+The Yokai Image (**.yi**) format is what I use to store images and font glyphs (of fixed size) for use with [YOKAI](https://github.com/mrmattuschka/yokai) and other micropython-based stuff that runs an e-paper display.****
 
 A file stores multiple glyphs/images and consists of three blocks:
 - metadata block
 - a lookup table
-- a series of monochrome images/glyphs (up to 256 in v0.1) stored as bitmaps, where each byte encodes 8 pixels TODO: mode?
+- a series of monochrome images/glyphs (up to 256 in v0.1) stored as bitmaps, where each byte encodes 8 pixels
   
 **...in this exact order**
 
@@ -29,7 +29,7 @@ Value | Name | length (incl. type) | Format | Description
 `0x00` | pointer_length | 2 | c | length of pointers used by LUT
 `0x01` | yi_type | 2 | c | type of yi file: font (`0x00`) or images (`0x01`)
 `0x02` | img_count | 2 | c | number of images in the file (max 256)
-`0x03` | img_encoding | 2 | c | bitmap encoding as used by micropython's `framebuf` TODO add link to framebuf
+`0x03` | img_encoding | 2 | c | bitmap encoding as used by micropython's [`framebuf`](https://docs.micropython.org/en/latest/library/framebuf.html): `0x00` for VLSB, `0x03` for HLSB, `0x04` for HMSB
 `0x04` | font_encoding | 2 | c | encoding used for fonts (as of now there's only ASCII: `0x00`)
 `0x05` | max_size | 9 | ii | maximum image dimensions encountered in the file in pixels (w, h)
 
