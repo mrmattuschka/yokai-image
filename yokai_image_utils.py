@@ -1,4 +1,3 @@
-from os import major
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import struct
@@ -30,7 +29,8 @@ def img2bytes(im, encoding="HLSB"):
 
 def bytes2img(im, size, encoding="HLSB"):
     axis, bitorder = encodings[encoding]
-
+    
+    # need to factor in that image may not be a multiple of 8 in packing direction
     if axis == 0:
         im = np.frombuffer(im, dtype="uint8").reshape([-1, size[axis]])
     else:
@@ -117,7 +117,7 @@ def encode_metadata(metadata: dict):
     return metadata_block
 
 
-def encode_imageset(
+def encode(
     images: dict, 
     yi_type: str, 
     img_encoding: str = "HLSB",
@@ -130,13 +130,13 @@ def encode_imageset(
         "img_encoding": img_encoding,
         "pointer_length": pointer_length,
         "image_count": len(images),
-        "max_size": tuple(np.max([i.size for i in images.items], 0))
+        "max_size": tuple(np.max([i.size for i in images.values()], 0))
     }
 
     if "yi_type" == "font":
         metadata["font_encoding"] = font_encoding
 
-    lut, image_block = encode_images(images)
+    lut, image_block = encode_images(images, encoding=img_encoding)
     lut_block = encode_lut(lut, pointer_length)
     metadata_block = encode_metadata(metadata)
 
@@ -154,12 +154,12 @@ def create_typeset(
 ):
     images = {}
 
-    max_size = np.max([font.getsize(g) for g in glyphs], 0)
-    bg_color = invert
-    fg_color = not invert
+    max_size = tuple(np.max([font.getsize(g) for g in glyphs], 0))
+    bg_color = not invert
+    fg_color = invert
 
     for glyph in glyphs:
-        size = size if fixed_size else font.getsize(g)
+        size = max_size if fixed_size else font.getsize(glyph)
         i = Image.new(size=size, mode='1', color=bg_color)
         d = ImageDraw.Draw(i)
     
@@ -168,7 +168,7 @@ def create_typeset(
         key = ord(glyph.encode(font_encoding))
         images[key] = i
 
-    return images, max_size
+    return images
 
 
 def create_imageset(
@@ -176,8 +176,8 @@ def create_imageset(
 ):
     image_dict = {}
     for idx, image in enumerate(images):
-        image = image.covert("1")
-        image[idx] = image
+        image = image.convert("1")
+        image_dict[idx] = image
 
     return image_dict
 
@@ -185,14 +185,15 @@ def create_imageset(
 def decode_yi_file(file):
     from yokai_image import decode_metadata, decode_lut, read_image
     images = {}
+    file.seek(0)
 
     metadata = decode_metadata(file)
     lut_len, lut = decode_lut(file, metadata)
     img_offset = metadata["metadata_length"] + lut_len
 
     for key, pointer in lut.items():
-        size, image_bytes = read_image(file, offset=img_offset, pointer=lut[pointer])
-        image = bytes2img(image_bytes, size, encoding=metadata["encoding"])
+        size, image_bytes = read_image(file, offset=img_offset, pointer=pointer)
+        image = bytes2img(image_bytes, metadata["max_size"], encoding=metadata["img_encoding"])
 
         images[key] = image
 

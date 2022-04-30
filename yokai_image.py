@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import struct
 
 MAJOR = 0
@@ -37,17 +38,25 @@ def decode_metadata(file):
             elif yi_type == 0x01:
                 metadata["yi_type"] = "font"
             else:
-                raise NotImplementedError("Unknown yi type: {}".format(yi_type))
+                raise ValueError("Unknown yi type: {}".format(yi_type))
         elif section_type == 0x02:
             metadata["img_count"] = read_char(file)
         elif section_type == 0x03:
-            metadata["img_encoding"] = read_char(file)
+            img_encoding = read_char(file)
+            if img_encoding == 0:
+                metadata["img_encoding"] = "VLSB"
+            elif img_encoding == 3:
+                metadata["img_encoding"] = "HLSB"
+            elif img_encoding == 4:
+                metadata["img_encoding"] = "HMSB"
+            else:
+                raise ValueError("Unknown img encoding: {}".format(img_encoding))
         elif section_type == 0x04:
             font_encoding = read_char(file)
             if font_encoding == 0x00:
                 metadata["font_encoding"] = "ascii"
             else:
-                raise NotImplementedError("Unknown font encoding: {}".format(font_encoding))
+                raise ValueError("Unknown font encoding: {}".format(font_encoding))
         elif section_type == 0x05:
             wh = file.read(struct.calcsize("2i"))
             w, h = struct.unpack("2i", wh)
