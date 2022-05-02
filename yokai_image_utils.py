@@ -129,7 +129,7 @@ def encode(
         "yi_type": yi_type,
         "img_encoding": img_encoding,
         "pointer_length": pointer_length,
-        "image_count": len(images),
+        "img_count": len(images),
         "max_size": tuple(np.max([i.size for i in images.values()], 0))
     }
 
