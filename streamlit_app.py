@@ -33,6 +33,7 @@ def download_gfont(fontname):
 ### BEGIN APP ###
 
 st.title("YŌKAI image serializer")
+st.caption("A tiny web-app to pack images or font faces for use with monochrome e-paper displays")
 
 app_mode_labels = {
     "img": "Encode images",
