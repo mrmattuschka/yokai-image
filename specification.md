@@ -1,5 +1,5 @@
 # Yokai Image File Specification
-The Yokai Image (**.yi**) format is what I use to store images and font glyphs (of fixed size) for use with [YOKAI](https://github.com/mrmattuschka/yokai) and other micropython-based stuff that runs an e-paper display.****
+The Yokai Image (**.yi**) format is what I use to store images and font glyphs (of fixed size) for use with [YOKAI](https://github.com/mrmattuschka/yokai) and other micropython-based stuff that runs an e-paper display.
 
 A file stores multiple glyphs/images and consists of three blocks:
 - metadata block
