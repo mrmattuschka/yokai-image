@@ -1,5 +1,5 @@
 # YOKAI-Image
-Lightweight tools that I use to store and display indexed images and font glyphs for use with [YOKAI](https://github.com/mrmattuschka/yokai) and other micropython-based stuff that sports an e-paper display.
+Lightweight tools that I use to serialize indexed images and font glyphs for use with [YOKAI](https://github.com/mrmattuschka/yokai) and other micropython-based stuff that sports an e-paper display.
 
 Yokai-Image comes with three components:
 - A decoder for binary `.yi` files, written solely in standard library python to ensure compatibility with micropython.
