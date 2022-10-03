@@ -49,8 +49,8 @@ def encode_images(images: dict, encoding="HLSB"):
 
     lut = {}
 
-    for key, img in images.items():
-        wh = struct.pack("ii", *img.size)
+    for key, (wh, img) in images.items():
+        wh = struct.pack("ii", *wh)
         img_bytes = img2bytes(img, encoding=encoding)
         length = 4 + len(wh) + len(img_bytes)
         length_bytes = struct.pack("i", length)
@@ -130,7 +130,7 @@ def encode(
         "img_encoding": img_encoding,
         "pointer_length": pointer_length,
         "img_count": len(images),
-        "max_size": tuple(np.max([i.size for i in images.values()], 0))
+        "max_size": tuple(np.max([i[1].size for i in images.values()], 0))
     }
 
     if "yi_type" == "font":
@@ -166,7 +166,7 @@ def create_typeset(
         d.text((0, 0), glyph, font=font, fill=fg_color)
 
         key = ord(glyph.encode(font_encoding))
-        images[key] = i
+        images[key] = (font.getbbox(glyph)[2:], i)
 
     return images
 
@@ -177,7 +177,7 @@ def create_imageset(
     image_dict = {}
     for idx, image in enumerate(images):
         image = image.convert("1")
-        image_dict[idx] = image
+        image_dict[idx] = (image.size, image)
 
     return image_dict
 

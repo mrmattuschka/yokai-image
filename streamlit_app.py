@@ -143,7 +143,7 @@ elif app_mode == "font":
     # Generate and show a preview of the text
     preview_text = st.text_input("Create a preview:", value="Haha text go brrr")
 
-    size = font.getsize(preview_text)
+    size = font.getbbox(preview_text)[2:]
     preview_image = Image.new(size=size, mode="1", color="WHITE")
     preview_draw = ImageDraw.Draw(preview_image)
     preview_draw.text((0, 0), preview_text, font=font, fill="BLACK")
