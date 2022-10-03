@@ -94,7 +94,7 @@ if app_mode == "img":
         if len(image_indices) > len(set(image_indices)): # Don't feel like requiring numpy just for this
             st.error("List indices are not unique!")
         else:
-            img_set = {idx: image for idx, image in zip(image_indices, images)}
+            img_set = {idx: (image.size, image) for idx, image in zip(image_indices, images)}
             img_bytes = yu.encode(img_set, "img", img_encoding=img_encoding)
             
             st.write("") # Little bit of spacing

@@ -15,7 +15,10 @@ def img2bytes(im, encoding="HLSB"):
     axis, bitorder = encodings[encoding]
     im = np.array(im).astype(bool)
 
-    pad = 8 - im.shape[axis] % 8
+    pad = im.shape[axis] % 8
+    if pad:
+        pad = 8 - pad
+
     if axis == 0:
         pad_sizes = [[0, pad], [0, 0]]
     else:
